@@ -183,7 +183,7 @@ class Maze:
             av = self.action_values[state]
             return np.random.choice(np.flatnonzero(av == av.max()))
 
-    def sarsa(self, gamma=0.99, alpha=0.2, epsilon=0.3, episodes=1000):
+    def sarsa(self, gamma=0.99, alpha=0.2, epsilon=0.3, episodes=100):
         init_state = self.state
         self.action_values = np.zeros((self.number_of_tiles, self.number_of_tiles, 4))
         for _ in tqdm(range(episodes)):

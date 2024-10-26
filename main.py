@@ -2,6 +2,8 @@ import pygame
 import numpy as np
 from maze import Maze
 import threading
+from rl_evaluator import RLEvaluator, run_comparison  # Add this import
+
 
 # Constants
 GAME_HEIGHT = 600
@@ -47,6 +49,22 @@ env = Maze(
     MAZE_WIDTH=GAME_WIDTH,
     SIZE=NUMBER_OF_TILES,
 )
+
+# Add evaluation before starting the game loop
+print("Running algorithm evaluation...")
+evaluator = run_comparison(env)
+vi_rewards = evaluator.metrics['VI_rewards']
+sarsa_rewards = evaluator.metrics['SARSA_rewards']
+
+# Save evaluation results if needed
+np.save('vi_rewards.npy', vi_rewards)
+np.save('sarsa_rewards.npy', sarsa_rewards)
+
+# Initialize Pygame and continue with your existing game loop...
+pygame.init()
+screen = pygame.display.set_mode((SCREEN_HEIGHT, SCREEN_WIDTH))
+pygame.display.set_caption("Maze Solver with Evaluation")
+
 env.solve()
 
 
@@ -74,10 +92,28 @@ def reset_goal():
     if env.state == env.goal_pos:
         env.reset_goal()
         env.solve()
-
+current_algorithm = 'VI'  # Start with Value Iteration
 
 # Game loop
 while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                # Toggle between algorithms
+                current_algorithm = 'SARSA' if current_algorithm == 'VI' else 'VI'
+                print(f"Switched to {current_algorithm}")
+            elif event.key == pygame.K_r:
+                # Reset the environment
+                env.reset_state()
+                player_pos = env.state
+
+    # Use the current algorithm for action selection
+    if current_algorithm == 'VI':
+        action = np.argmax(env.policy_probs[player_pos])
+    else:  # SARSA
+        action = env.target_policy(player_pos)
     # Start a new thread
     x = threading.Thread(target=reset_goal)
     x.daemon = True
@@ -170,6 +206,11 @@ while running:
 
     # Control the frame rate of the game
     clock.tick(60)
+    # Add algorithm name to the display
+    font = pygame.font.Font(None, 36)
+    text = font.render(f"Algorithm: {current_algorithm}", True, (255, 255, 255))
+    screen.blit(text, (10, SCREEN_HEIGHT - 40))
+    pygame.display.flip()
 
 # Quit Pygame when the game loop is exited
 pygame.quit()
