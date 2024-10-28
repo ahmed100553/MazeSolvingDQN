@@ -79,7 +79,17 @@ class Maze:
             float: The reward for taking the action from the current state.
         """
         next_state = self._get_next_state(state, action)
-        return -float(state != self.goal_pos)
+
+        # If the agent reached the goal
+        if next_state == self.goal_pos:
+            return 10.0  # High reward for reaching the goal
+
+        # If the agent hits a wall or stays in the same position
+        if next_state == state:
+            return -5.0  # Penalty for hitting a wall
+
+        # Small penalty for each step taken (to encourage shorter paths)
+        return -1.0
 
     def step(self, action):
         """
@@ -124,19 +134,22 @@ class Maze:
         Returns:
             Tuple[int, int]: The next state (row, col) after taking the action.
         """
-        if action == 0:
+        if action == 0:  # Move left
             next_state = (state[0], state[1] - 1)
-        elif action == 1:
+        elif action == 1:  # Move up
             next_state = (state[0] - 1, state[1])
-        elif action == 2:
+        elif action == 2:  # Move right
             next_state = (state[0], state[1] + 1)
-        elif action == 3:
+        elif action == 3:  # Move down
             next_state = (state[0] + 1, state[1])
         else:
             raise ValueError("Action value not supported:", action)
-        if (next_state[0], next_state[1]) not in self.walls:
-            return next_state
-        return state
+
+        if next_state in self.walls:
+            print(f"Hit wall at {next_state}, staying at {state}")
+            return state
+        print(f"Moving from {state} to {next_state} with action {action}")
+        return next_state
 
     def solve(self, gamma=0.99, theta=1e-6):
         """

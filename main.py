@@ -57,8 +57,8 @@ vi_rewards = evaluator.metrics['VI_rewards']
 sarsa_rewards = evaluator.metrics['SARSA_rewards']
 
 # Save evaluation results if needed
-np.save('vi_rewards.npy', vi_rewards)
-np.save('sarsa_rewards.npy', sarsa_rewards)
+#np.save('vi_rewards.npy', vi_rewards)
+#np.save('sarsa_rewards.npy', sarsa_rewards)
 
 # Initialize Pygame and continue with your existing game loop...
 pygame.init()
