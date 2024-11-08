@@ -44,7 +44,7 @@ level = [
 
 env = Maze(
     level,
-    goal_pos=(23, 20),
+    goal_pos=(20, 19),
     MAZE_HEIGHT=GAME_HEIGHT,
     MAZE_WIDTH=GAME_WIDTH,
     SIZE=NUMBER_OF_TILES,
@@ -108,7 +108,7 @@ while running:
                 # Reset the environment
                 env.reset_state()
                 player_pos = env.state
-
+  
     # Use the current algorithm for action selection
     if current_algorithm == 'VI':
         action = np.argmax(env.policy_probs[player_pos])

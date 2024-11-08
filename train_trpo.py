@@ -12,8 +12,8 @@ def train_trpo(env, agent, num_episodes=1000):
         states, actions, rewards, log_probs, values, masks = [], [], [], [], [], []
 
         # Print initial state for debugging
-        print(f"Starting Episode {episode + 1}")
-        print(f"Initial State: {state}")
+        #print(f"Starting Episode {episode + 1}")
+        #print(f"Initial State: {state}")
 
         # Collect trajectories
         while True:
@@ -26,7 +26,7 @@ def train_trpo(env, agent, num_episodes=1000):
             flat_next_state = np.array(next_state, dtype=np.float32)
 
             # Log collected data for debugging
-            print(f"Action Taken: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
+            #print(f"Action Taken: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
 
             states.append(flat_state)
             actions.append(action)
@@ -38,7 +38,7 @@ def train_trpo(env, agent, num_episodes=1000):
                 values.append(agent.value_net(torch.FloatTensor(flat_state)).item())
 
             if done:
-                print(f"Episode {episode + 1} Ended with State: {next_state} and Total Reward: {sum(rewards)}")
+                #print(f"Episode {episode + 1} Ended with State: {next_state} and Total Reward: {sum(rewards)}")
                 break
             state = next_state
 

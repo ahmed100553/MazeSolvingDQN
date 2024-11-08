@@ -82,14 +82,14 @@ class Maze:
 
         # If the agent reached the goal
         if next_state == self.goal_pos:
-            return 10.0  # High reward for reaching the goal
+            return 1  # High reward for reaching the goal
 
         # If the agent hits a wall or stays in the same position
         if next_state == state:
-            return -5.0  # Penalty for hitting a wall
+            return -0.75  # Penalty for hitting a wall
 
         # Small penalty for each step taken (to encourage shorter paths)
-        return -1.0
+        return -0.25
 
     def step(self, action):
         """
@@ -146,9 +146,9 @@ class Maze:
             raise ValueError("Action value not supported:", action)
 
         if next_state in self.walls:
-            print(f"Hit wall at {next_state}, staying at {state}")
+            #print(f"Hit wall at {next_state}, staying at {state}")
             return state
-        print(f"Moving from {state} to {next_state} with action {action}")
+        #print(f"Moving from {state} to {next_state} with action {action}")
         return next_state
 
     def solve(self, gamma=0.99, theta=1e-6):
@@ -196,7 +196,7 @@ class Maze:
             av = self.action_values[state]
             return np.random.choice(np.flatnonzero(av == av.max()))
 
-    def sarsa(self, gamma=0.99, alpha=0.2, epsilon=0.3, episodes=100):
+    def sarsa(self, gamma=0.99, alpha=0.2, epsilon=0.1, episodes=1000):
         init_state = self.state
         self.action_values = np.zeros((self.number_of_tiles, self.number_of_tiles, 4))
         for _ in tqdm(range(episodes)):
