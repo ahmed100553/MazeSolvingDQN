@@ -178,6 +178,7 @@ class RLEvaluator:
         
         return pd.DataFrame(stats).round(2)
 
+
 def run_comparison(maze_env):
     """Run a complete comparison of Value Iteration and SARSA."""
     evaluator = RLEvaluator(maze_env)
@@ -193,7 +194,7 @@ def run_comparison(maze_env):
     # Plot path heatmaps
     evaluator.plot_path_heatmap('VI')
     evaluator.plot_path_heatmap('SARSA')
-    
+
     # Print statistics
     print("\nPerformance Statistics:")
     print(evaluator.generate_statistics())

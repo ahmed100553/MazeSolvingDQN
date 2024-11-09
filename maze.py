@@ -18,11 +18,11 @@ class Maze:
             MAZE_WIDTH (int, optional): Width of the maze in pixels. Defaults to 600.
             SIZE (int, optional): Number of tiles per row/column in the maze. Defaults to 25.
         """
-        self.goal = (23, 20)
+        #self.goal = (23, 20)
+        self.goal_pos = goal_pos
         self.number_of_tiles = SIZE
         self.tile_size = MAZE_HEIGHT // self.number_of_tiles
         self.maze, self.walls = self.create_maze(level)
-        self.goal_pos = goal_pos
         self.level = level
         self.state = self.get_init_state(self.level)
 
@@ -82,14 +82,14 @@ class Maze:
 
         # If the agent reached the goal
         if next_state == self.goal_pos:
-            return 1  # High reward for reaching the goal
+            return 10  # High reward for reaching the goal
 
         # If the agent hits a wall or stays in the same position
         if next_state == state:
-            return -0.75  # Penalty for hitting a wall
+            return -1  # Penalty for hitting a wall
 
         # Small penalty for each step taken (to encourage shorter paths)
-        return -0.25
+        return -0.1
 
     def step(self, action):
         """
@@ -103,7 +103,7 @@ class Maze:
         """
         next_state = self._get_next_state(self.state, action)
         reward = self.compute_reward(self.state, action)
-        done = next_state == self.goal
+        done = next_state == self.goal_pos
         self.state = next_state
         return next_state, reward, done
 
@@ -120,7 +120,7 @@ class Maze:
         """
         next_state = self._get_next_state(state, action)
         reward = self.compute_reward(state, action)
-        done = next_state == self.goal
+        done = next_state == self.goal_pos
         return next_state, reward, done
 
     def _get_next_state(self, state: Tuple[int, int], action: int):
@@ -196,7 +196,7 @@ class Maze:
             av = self.action_values[state]
             return np.random.choice(np.flatnonzero(av == av.max()))
 
-    def sarsa(self, gamma=0.99, alpha=0.2, epsilon=0.1, episodes=1000):
+    def sarsa(self, gamma=0.99, alpha=0.2, epsilon=0.3, episodes=1000):
         init_state = self.state
         self.action_values = np.zeros((self.number_of_tiles, self.number_of_tiles, 4))
         for _ in tqdm(range(episodes)):
