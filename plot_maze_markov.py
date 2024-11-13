@@ -5,7 +5,7 @@ import numpy as np  # Ensure numpy is imported
 # Define the maze layout
 level = [
     "XXXXXXXXXXXXX",
-    "X           X",
+    "XG          X",
     "X XXX X XXX X",
     "X   X X   X X",
     "XXX X XXX X X",
@@ -71,8 +71,8 @@ def plot_markov_graph(G, level, start_pos, goal_pos):
     nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=10, edge_color='blue')
 
     # Optionally add labels
-    # labels = {node: f"{node}" for node in G.nodes()}
-    # nx.draw_networkx_labels(G, pos, labels, font_size=6)
+    labels = {node: f"{node}" for node in G.nodes()}
+    nx.draw_networkx_labels(G, pos, labels, font_size=6)
 
     # Add a legend
     plt.legend(scatterpoints=1, markerscale=1, fontsize=12)
@@ -95,3 +95,4 @@ if __name__ == "__main__":
         goal_pos = (1, 2)  # Use specified goal position if not in the maze layout
 
     G = create_markov_graph(level)
+    plot_markov_graph(G, level, start_pos, goal_pos)
