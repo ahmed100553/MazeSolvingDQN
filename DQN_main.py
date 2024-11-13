@@ -26,7 +26,7 @@ level = [
     "XXXXXXXXXXXXX",
 ]
 
-env = Maze(level, goal_pos=(1, 2), MAZE_HEIGHT=GAME_HEIGHT, MAZE_WIDTH=GAME_WIDTH, SIZE=40)
+env = Maze(level, goal_pos=(1, 2), MAZE_HEIGHT=GAME_HEIGHT, MAZE_WIDTH=GAME_WIDTH, SIZE=25)
 
 # Define state and action dimensions based on your environment's needs
 state_dim = 2  # Assuming the state is a 2D coordinate (row, col)

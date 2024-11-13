@@ -5,7 +5,7 @@ import numpy as np  # Ensure numpy is imported
 # Define the maze layout
 level = [
     "XXXXXXXXXXXXX",
-    "XG          X",
+    "X          GX",
     "X XXX X XXX X",
     "X   X X   X X",
     "XXX X XXX X X",
@@ -37,11 +37,15 @@ def create_markov_graph(level):
             if level[r][c] != 'X':
                 current_state = (r, c)
                 G.add_node(current_state)
-                for dr, dc in movements.values():
+                possible_moves = []
+                for direction, (dr, dc) in movements.items():
                     nr, nc = r + dr, c + dc
                     if 0 <= nr < num_rows and 0 <= nc < num_cols and level[nr][nc] != 'X':
                         next_state = (nr, nc)
-                        G.add_edge(current_state, next_state)
+                        possible_moves.append(next_state)
+                probability = 1 / len(possible_moves) if possible_moves else 0
+                for next_state in possible_moves:
+                    G.add_edge(current_state, next_state, probability=probability)
 
     return G
 
@@ -53,32 +57,37 @@ def plot_markov_graph(G, level, start_pos, goal_pos):
     maze_array = np.array([[1 if cell == 'X' else 0 for cell in row] for row in level])
 
     # Positions for nodes
-    pos = {node: (node[1], -node[0]) for node in G.nodes()}  # Adjust for correct orientation
+    pos = {node: (node[1], node[0]) for node in G.nodes()}  # Adjusted for correct orientation
 
-    plt.figure(figsize=(12, 12))
+    fig, ax = plt.subplots(figsize=(12, 12))
 
     # Display the maze layout
-    plt.imshow(maze_array, cmap='Greys', origin='upper', extent=(-0.5, num_cols - 0.5, num_rows - 0.5, -0.5))
-
-    # Draw the nodes
-    nx.draw_networkx_nodes(G, pos, node_size=100, node_color='lightblue', edgecolors='black')
-
-    # Highlight the start and goal positions
-    nx.draw_networkx_nodes(G, pos, nodelist=[start_pos], node_size=150, node_color='green', edgecolors='black', label='Start')
-    nx.draw_networkx_nodes(G, pos, nodelist=[goal_pos], node_size=150, node_color='red', edgecolors='black', label='Goal')
+    ax.imshow(maze_array, cmap='Greys', origin='lower', extent=(-0.5, num_cols - 0.5, -0.5, num_rows - 0.5))
 
     # Draw the edges
-    nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=10, edge_color='blue')
+    nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=10, edge_color='blue', width=1, ax=ax)
+
+    # Draw the nodes
+    nx.draw_networkx_nodes(G, pos, node_size=100, node_color='lightblue', edgecolors='black', ax=ax)
+
+    # Highlight the start and goal positions
+    nx.draw_networkx_nodes(G, pos, nodelist=[start_pos], node_size=150, node_color='green', edgecolors='black', label='Start', ax=ax)
+    nx.draw_networkx_nodes(G, pos, nodelist=[goal_pos], node_size=150, node_color='red', edgecolors='black', label='Goal', ax=ax)
+
+    # Add edge labels with probabilities
+    edge_labels = nx.get_edge_attributes(G, 'probability')
+    formatted_edge_labels = {(u, v): f"{p:.2f}" for (u, v), p in edge_labels.items()}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=formatted_edge_labels, font_size=6, ax=ax)
 
     # Optionally add labels
     labels = {node: f"{node}" for node in G.nodes()}
-    nx.draw_networkx_labels(G, pos, labels, font_size=6)
+    nx.draw_networkx_labels(G, pos, labels, font_size=6, ax=ax)
 
     # Add a legend
-    plt.legend(scatterpoints=1, markerscale=1, fontsize=12)
+    ax.legend(scatterpoints=1, markerscale=1, fontsize=12)
 
-    plt.title('Markov Representation of the Maze')
-    plt.axis('off')
+    ax.set_title('Markov Representation of the Maze')
+    ax.axis('off')
     plt.show()
 
 if __name__ == "__main__":
