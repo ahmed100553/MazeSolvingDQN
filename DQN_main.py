@@ -12,12 +12,12 @@ NUMBER_OF_TILES = 9  # Updated for 9x9 maze
 # Maze layout
 level = [
     "XXXXXXXXXXXXX",
-    "X     X     X",
+    "X           X",
     "X XXX X XXX X",
     "X   X X   X X",
     "XXX X XXX X X",
     "X   X   X   X",
-    "X XXX XXX XXX",
+    "X XXX XXX X X",
     "X X   X   X X",
     "X XXX X XXX X",
     "X   X X   X X",
@@ -26,7 +26,7 @@ level = [
     "XXXXXXXXXXXXX",
 ]
 
-env = Maze(level, goal_pos=(1, 1), MAZE_HEIGHT=360, MAZE_WIDTH=360, SIZE=9)
+env = Maze(level, goal_pos=(1, 2), MAZE_HEIGHT=GAME_HEIGHT, MAZE_WIDTH=GAME_WIDTH, SIZE=40)
 
 # Define state and action dimensions based on your environment's needs
 state_dim = 2  # Assuming the state is a 2D coordinate (row, col)
@@ -67,8 +67,8 @@ episode_rewards = []
 episode_losses = []
 
 # Training loop
-num_episodes = 1000
-evaluation_interval = 50  # Evaluate every 50 episodes
+num_episodes = 300
+evaluation_interval = 10  # Evaluate every 50 episodes
 for episode in range(num_episodes):
     state = env.reset_state()
     done = False
@@ -93,7 +93,7 @@ for episode in range(num_episodes):
     episode_losses.append(avg_loss)         # Store average loss
 
     # Print episode details
-    print(f"Episode {episode} completed with {steps} steps and average loss {avg_loss}")
+    print(f"Episode {episode} completed with {steps} steps, average loss {avg_loss} and total reward {episode_reward}")
     
     # Evaluate the agent and plot path every 50 episodes
     if episode % evaluation_interval == 0 and episode != 0:
