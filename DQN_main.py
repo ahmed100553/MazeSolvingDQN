@@ -26,7 +26,7 @@ level = [
     "XXXXXXXXXXXXX",
 ]
 
-env = Maze(level, goal_pos=(1, 2), MAZE_HEIGHT=GAME_HEIGHT, MAZE_WIDTH=GAME_WIDTH, SIZE=25)
+env = Maze(level, goal_pos=(1, 5), MAZE_HEIGHT=GAME_HEIGHT, MAZE_WIDTH=GAME_WIDTH, SIZE=25)
 
 # Define state and action dimensions based on your environment's needs
 state_dim = 2  # Assuming the state is a 2D coordinate (row, col)
@@ -68,7 +68,7 @@ episode_losses = []
 
 # Training loop
 num_episodes = 300
-evaluation_interval = 10  # Evaluate every 50 episodes
+evaluation_interval = 50  # Evaluate every 50 episodes
 for episode in range(num_episodes):
     state = env.reset_state()
     done = False
