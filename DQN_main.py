@@ -67,7 +67,7 @@ episode_rewards = []
 episode_losses = []
 
 # Training loop
-num_episodes = 300
+num_episodes = 150
 evaluation_interval = 50  # Evaluate every 50 episodes
 for episode in range(num_episodes):
     state = env.reset_state()

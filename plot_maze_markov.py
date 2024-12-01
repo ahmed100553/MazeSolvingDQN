@@ -5,7 +5,7 @@ import numpy as np  # Ensure numpy is imported
 # Define the maze layout
 level = [
     "XXXXXXXXXXXXX",
-    "X          GX",
+    "X           X",
     "X XXX X XXX X",
     "X   X X   X X",
     "XXX X XXX X X",
