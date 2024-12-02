@@ -82,14 +82,14 @@ class Maze:
 
         # If the agent reached the goal
         if next_state == self.goal_pos:
-            return 10  # High reward for reaching the goal
+            return 100  # High reward for reaching the goal
 
         # If the agent hits a wall or stays in the same position
         if next_state == state:
             return -1  # Penalty for hitting a wall
 
         # Small penalty for each step taken (to encourage shorter paths)
-        return -0.1
+        return -0.5
 
     def step(self, action):
         """
