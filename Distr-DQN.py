@@ -25,52 +25,6 @@ class replay_buffer(object):
     def __len__(self):
         return len(self.memory)
 
-class NoisyLinear(nn.Module):
-    def __init__(self, input_dim, output_dim, std_init=0.4):
-        super(NoisyLinear, self).__init__()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-        self.std_init = std_init
-
-        self.weight_mu = nn.Parameter(torch.FloatTensor(self.output_dim, self.input_dim))
-        self.weight_sigma = nn.Parameter(torch.FloatTensor(self.output_dim, self.input_dim))
-
-        self.bias_mu = nn.Parameter(torch.FloatTensor(self.output_dim))
-        self.bias_sigma = nn.Parameter(torch.FloatTensor(self.output_dim))
-
-        self.register_buffer('weight_epsilon', torch.FloatTensor(self.output_dim, self.input_dim))
-        self.register_buffer('bias_epsilon', torch.FloatTensor(self.output_dim))
-
-        self.reset_parameter()
-        self.reset_noise()
-
-    def forward(self, input):
-        if self.training:
-            weight = self.weight_mu + self.weight_sigma.mul(self.weight_epsilon)
-            bias = self.bias_mu + self.bias_sigma.mul(self.bias_epsilon)
-        else:
-            weight = self.weight_mu
-            bias = self.bias_mu
-        return F.linear(input, weight, bias)
-
-    def _scale_noise(self, size):
-        noise = torch.randn(size)
-        noise = noise.sign().mul(noise.abs().sqrt())
-        return noise
-
-    def reset_parameter(self):
-        mu_range = 1.0 / np.sqrt(self.input_dim)
-        self.weight_mu.detach().uniform_(-mu_range, mu_range)
-        self.bias_mu.detach().uniform_(-mu_range, mu_range)
-        self.weight_sigma.detach().fill_(self.std_init / np.sqrt(self.input_dim))
-        self.bias_sigma.detach().fill_(self.std_init / np.sqrt(self.output_dim))
-
-    def reset_noise(self):
-        epsilon_in = self._scale_noise(self.input_dim)
-        epsilon_out = self._scale_noise(self.output_dim)
-        self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
-        self.bias_epsilon.copy_(self._scale_noise(self.output_dim))
-
 class categorical_dqn(nn.Module):
     def __init__(self, observation_dim, action_dim, atoms_num, v_min, v_max):
         super(categorical_dqn, self).__init__()
@@ -93,15 +47,11 @@ class categorical_dqn(nn.Module):
         x = F.softmax(x.view(-1, self.atoms_num), 1).view(-1, self.action_dim, self.atoms_num)
         return x
 
-    def reset_noise(self):
-        pass
-
     def act(self, observation, epsilon):
         if random.random() > epsilon:
             dist = self.forward(observation)
-            dist = dist.detach()
             dist = dist.mul(torch.linspace(self.v_min, self.v_max, self.atoms_num))
-            action = dist.sum(2).max(1)[1].detach()[0].item()
+            action = dist.sum(2).max(1)[1].item()
         else:
             action = random.choice(list(range(self.action_dim)))
         return action
@@ -110,24 +60,27 @@ def projection_distribution(target_model, next_observation, reward, done, v_min,
     batch_size = next_observation.size(0)
     delta_z = float(v_max - v_min) / (atoms_num - 1)
     support = torch.linspace(v_min, v_max, atoms_num)
-    next_dist = target_model.forward(next_observation).detach().mul(support)
-    next_action = next_dist.sum(2).max(1)[1]
-    next_action = next_action.unsqueeze(1).unsqueeze(1).expand(batch_size, atoms_num)
+    next_dist = target_model(next_observation).detach()
+    next_action = next_dist.mul(support).sum(2).max(1)[1]
+    next_dist = next_dist[range(batch_size), next_action]
 
-    Tz = reward + (1 - done) * support * gamma
+    Tz = reward.unsqueeze(1) + gamma * (1 - done.unsqueeze(1)) * support.unsqueeze(0)
     Tz = Tz.clamp(min=v_min, max=v_max)
     b = (Tz - v_min) / delta_z
     l = b.floor().long()
     u = b.ceil().long()
 
-    offset = torch.linspace(0, (batch_size - 1) * atoms_num, batch_size).long().unsqueeze(1).expand_as(next_dist)
+    offset = torch.linspace(0, (batch_size - 1) * atoms_num, batch_size).long().unsqueeze(1).expand(batch_size, atoms_num)
 
-    proj_dist = torch.zeros_like(next_dist, dtype=torch.float32)
-    proj_dist.view(-1).index_add_(0, (offset + l).view(-1), (next_dist * (u.float() - b)).view(-1))
-    proj_dist.view(-1).index_add_(0, (offset + u).view(-1), (next_dist * (b - l.float())).view(-1))
+    proj_dist = torch.zeros(next_dist.size())
+    proj_dist.view(-1).index_add_(0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1))
+    proj_dist.view(-1).index_add_(0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1))
     return proj_dist
 
 def train(eval_model, target_model, buffer, v_min, v_max, atoms_num, gamma, batch_size, optimizer, count, update_freq):
+    if len(buffer) < batch_size:
+        return 0.0
+
     observation, action, reward, next_observation, done = buffer.sample(batch_size)
 
     observation = torch.FloatTensor(observation)
@@ -138,21 +91,20 @@ def train(eval_model, target_model, buffer, v_min, v_max, atoms_num, gamma, batc
 
     proj_dist = projection_distribution(target_model, next_observation, reward, done, v_min, v_max, atoms_num, gamma)
 
-    dist = eval_model.forward(observation)
+    dist = eval_model(observation)
     action = action.unsqueeze(1).unsqueeze(1).expand(batch_size, 1, atoms_num)
     dist = dist.gather(1, action).squeeze(1)
-    dist.detach().clamp_(0.01, 0.99)
+    dist = dist.clamp(1e-3, 1 - 1e-3)
     loss = - (proj_dist * dist.log()).sum(1).mean()
 
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
 
-    eval_model.reset_noise()
-    target_model.reset_noise()
-
     if count % update_freq == 0:
         target_model.load_state_dict(eval_model.state_dict())
+
+    return loss.item()
 
 def evaluate_agent(env, agent, num_runs=5):
     total_reward = 0
@@ -196,6 +148,12 @@ if __name__ == '__main__':
     capacity = 10000
     exploration = 100
     render = False
+    GAME_HEIGHT = 125
+    GAME_WIDTH = 125
+    NUMBER_OF_TILES = 9
+    SCREEN_HEIGHT = 700
+    SCREEN_WIDTH = 700
+    TILE_SIZE = GAME_HEIGHT // NUMBER_OF_TILES
 
     # Initialize the maze environment
     level = [
@@ -213,7 +171,7 @@ if __name__ == '__main__':
         "XP        X X",
         "XXXXXXXXXXXXX",
     ]
-    env = Maze(level, goal_pos=(1, 5), MAZE_HEIGHT=360, MAZE_WIDTH=360, SIZE=25)
+    env = Maze(level, goal_pos=(1, 5), MAZE_HEIGHT=GAME_HEIGHT, MAZE_WIDTH=GAME_WIDTH, SIZE=TILE_SIZE)
 
     action_dim = 4  # Four actions: left, up, right, down
     observation_dim = 2  # Assuming the state is a 2D coordinate (row, col)
@@ -265,11 +223,12 @@ if __name__ == '__main__':
                 print(f'episode: {i+1}  reward: {reward_total}  weight_reward: {weight_reward:.3f}  epsilon: {epsilon:.2f}')
                 break
 
-        # Evaluate the agent and plot path every 50 episodes
-        if i % 500 == 0 and i != 0:
+        # Evaluate the agent and plot path every 100 episodes if reward is more than -100
+        if i % 100 == 0 and i != 0:
             avg_reward = evaluate_agent(env, eval_net)
             print(f"Evaluation after episode {i}: Average Reward = {avg_reward}")
-            plot_path(agent_path, i)
+            if reward_total > -100:
+                plot_path(agent_path, i)
 
     # After training, plot rewards and losses
     plt.figure(figsize=(12, 5))

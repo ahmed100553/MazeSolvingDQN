@@ -54,9 +54,13 @@ def plot_path(agent_path, episode):
     grid = np.zeros((env.number_of_tiles, env.number_of_tiles))
     for (row, col) in env.walls:
         grid[row, col] = -1  # Represent walls with -1
-    for step, (row, col) in enumerate(agent_path):
+    # Mark start, end, and a few intermediate points
+    num_points = min(10, len(agent_path))  # Limit to 10 points
+    points_to_plot = [agent_path[i] for i in np.linspace(0, len(agent_path) - 1, num_points, dtype=int)]
+    for step, (row, col) in enumerate(points_to_plot):
         grid[row, col] = step + 1  # Mark path with step number
     grid[env.goal_pos] = 10  # Mark goal with 10
+    plt.figure(figsize=(env.number_of_tiles, env.number_of_tiles))  # Adjust figure size to match maze size
     plt.imshow(grid, cmap="viridis", origin="upper")
     plt.colorbar(label="Steps (0=start, 10=goal)")
     plt.title(f"Path Taken by Agent - Episode {episode}")
@@ -96,9 +100,10 @@ for episode in range(num_episodes):
     print(f"Episode {episode} completed with {steps} steps, average loss {avg_loss} and total reward {episode_reward}")
     
     # Evaluate the agent and plot path every 50 episodes
-    if episode % evaluation_interval == 0 and episode != 0:
-        avg_reward = evaluate_agent(env, agent)
-        print(f"Evaluation after episode {episode}: Average Reward = {avg_reward}")
+    #if episode % evaluation_interval == 0 and episode != 0:
+        #avg_reward = evaluate_agent(env, agent)
+        #print(f"Evaluation after episode {episode}: Average Reward = {avg_reward}")
+    if episode_reward > -100:
         plot_path(agent_path, episode)
 
 # After training, plot rewards and losses
