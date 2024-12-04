@@ -37,6 +37,7 @@ class DQNAgent:
     def update_target_network(self):
         self.target_network.load_state_dict(self.q_network.state_dict())
 
+    '''
     def get_action(self, state, epsilon=0.1):
         if random.random() < epsilon:
             return random.randint(0, self.action_dim - 1)
@@ -44,6 +45,31 @@ class DQNAgent:
         with torch.no_grad():
             q_values = self.q_network(state)
         return q_values.argmax().item()
+        '''
+    def get_action(self, state, temperature=1.0):
+        """
+        Selects an action using the Boltzmann distribution (softmax over Q-values).
+
+        Args:
+            state (list or np.ndarray): The current state.
+            temperature (float): Temperature parameter controlling exploration.
+
+        Returns:
+            int: Selected action index.
+        """
+        state = torch.FloatTensor(state).unsqueeze(0)
+        with torch.no_grad():
+            q_values = self.q_network(state).squeeze(0).numpy()  # Get Q-values as a numpy array
+
+        # Compute Boltzmann (softmax) probabilities
+        q_values_scaled = q_values / temperature
+        exp_q = np.exp(q_values_scaled - np.max(q_values_scaled))  # Subtract max for numerical stability
+        probabilities = exp_q / np.sum(exp_q)
+
+        # Select an action based on the computed probabilities
+        action = np.random.choice(len(q_values), p=probabilities)
+        return action
+
 
     def store_transition(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
