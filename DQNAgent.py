@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+torch.manual_seed(434516270666000)
+np.random.seed(2147483648)
 import torch.nn as nn
 import torch.optim as optim
 import random
