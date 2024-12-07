@@ -36,16 +36,15 @@ class DQNAgent:
 
     def update_target_network(self):
         self.target_network.load_state_dict(self.q_network.state_dict())
-
-    '''
-    def get_action(self, state, epsilon=0.1):
+    
+    def get_action_ep(self, state, epsilon):
         if random.random() < epsilon:
             return random.randint(0, self.action_dim - 1)
         state = torch.FloatTensor(state).unsqueeze(0)
         with torch.no_grad():
             q_values = self.q_network(state)
         return q_values.argmax().item()
-        '''
+        
     def get_action(self, state, temperature=1.0):
         """
         Selects an action using the Boltzmann distribution (softmax over Q-values).
