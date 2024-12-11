@@ -1,3 +1,37 @@
+"""
+This script trains a Deep Q-Network (DQN) agent to solve a maze environment. The maze layout, agent, and environment
+are defined, and the agent is trained over a specified number of episodes. The script includes functions for evaluating
+the agent's performance and plotting the path taken by the agent.
+Modules:
+    numpy: For numerical operations.
+    matplotlib.pyplot: For plotting.
+    maze: Custom module for the maze environment.
+    DQNAgent: Custom module for the DQN agent.
+    rl_evaluator: Custom module for evaluating reinforcement learning agents.
+Constants:
+    GAME_HEIGHT (int): Height of the game window.
+    GAME_WIDTH (int): Width of the game window.
+    NUMBER_OF_TILES (int): Number of tiles in the maze.
+Maze Layout:
+    level (list): List of strings representing the maze layout.
+Functions:
+    evaluate_agent(env, agent, num_runs=5):
+        Evaluates the agent's performance over a specified number of runs.
+        Args:
+            env (Maze): The maze environment.
+            agent (DQNAgent): The DQN agent.
+            num_runs (int): Number of runs for evaluation.
+        Returns:
+            float: Average reward over the evaluation runs.
+    plot_path(agent_path, episode):
+        Plots the path taken by the agent in the maze.
+        Args:
+            agent_path (list): List of (row, col) tuples representing the agent's path.
+            episode (int): The episode number for the plot title.
+Training Loop:
+    Trains the DQN agent over a specified number of episodes. Tracks and prints episode details, and plots the agent's
+    path and performance metrics (rewards and losses) after training.
+"""
 import numpy as np
 import matplotlib.pyplot as plt  # Add this import
 from maze import Maze
