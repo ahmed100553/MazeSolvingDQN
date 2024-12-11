@@ -37,8 +37,6 @@ To train the DQN agent, run the `dqn_main.py` script:
 ```bash
 python [dqn_main.py]
 ```
-GitHub Copilot
-Sure! Here is a README.md file for your project:
 
 This script will train the agent over a specified number of episodes and plot the rewards and losses after training.
 
